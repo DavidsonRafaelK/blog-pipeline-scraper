@@ -1,9 +1,6 @@
 import os
 import psycopg2
 import psycopg2.extras
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def get_connection():
     database_url = os.environ.get("DATABASE_URL")

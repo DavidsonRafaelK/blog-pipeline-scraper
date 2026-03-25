@@ -3,9 +3,6 @@ import time
 import psycopg2
 import psycopg2.extras
 import google.generativeai as genai
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def load_api_key():
     keys = []
@@ -19,7 +16,7 @@ def load_api_key():
         i += 1
     
     if not keys:
-        raise ValueError("No API keys found. Please set GENAI_API_KEY_1, GENAI_API_KEY_2, etc. in your environment variables.")
+        raise ValueError("No API keys found. Please set GEMINI_API_KEY_1, GEMINI_API_KEY_2, etc. in your environment variables.")
     
     print(f"Loaded {len(keys)} API keys.")
     return keys
@@ -43,6 +40,8 @@ class GeminiEmbedder:
 
         attempts = 0
         max_attempts = len(self.api_keys)
+        retries = 0
+        max_retries = 3
 
         while attempts < max_attempts:
             try:
@@ -65,9 +64,12 @@ class GeminiEmbedder:
                     if attempts < max_attempts:
                         self._rotate_key()
                     else:
-                        print("All API keys have been exhausted. Please wait before retrying.")
-                        time.sleep(60)  # Wait for 1 minute before retrying
-                        attempts = 0  # Reset attempts after waiting
+                        retries += 1
+                        if retries >= max_retries:
+                            raise Exception("Failed to get embedding: all API keys exhausted after multiple retries.")
+                        print(f"All keys exhausted. Waiting 60s before retry {retries}/{max_retries}...")
+                        time.sleep(60)
+                        attempts = 0
                 else:
                     raise e
         raise Exception("Failed to get embedding after exhausting all API keys.")
@@ -75,49 +77,46 @@ class GeminiEmbedder:
 def generate_embeddings_for_all():
     api_keys = load_api_key()
     embedder = GeminiEmbedder(api_keys)
-    conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    cur.execute("""
-        SELECT id, title, content 
-        FROM scraped_articles 
-        WHERE embedding IS NULL
-        ORDER BY scraped_at DESC
-    """)
-    
-    articles = cur.fetchall()
-
-    if not articles:
-        print("No articles found without embeddings.")
-        cur.close()
-        conn.close()
-        return
-    print(f"Found {len(articles)} articles without embeddings. Generating embeddings...")
-
-    success_count = 0
-    error_count = 0
-
-    for i, article in enumerate(articles):
-        try:
-            text_to_embed = f"{article['title']}\n\n{article['content']}"
-            embedding = embedder.get_embedding(text_to_embed)
-            
+    with psycopg2.connect(os.environ.get("DATABASE_URL")) as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute("""
-                UPDATE scraped_articles 
-                SET embedding = %s::vector
-                WHERE id = %s
-            """, (str(embedding), str(article['id'])))
-            
-            conn.commit()
-            success_count += 1
-            print(f"Processed article {i+1}/{len(articles)} (ID: {article['id']}) - Success")
-            time.sleep(0.5)  # Short delay to avoid hitting rate limits
+                SELECT id, title, content 
+                FROM scraped_articles 
+                WHERE embedding IS NULL
+                ORDER BY scraped_at DESC
+            """)
 
-        except Exception as e:
-            conn.rollback()
-            error_count += 1
-            print(f"Error processing article {i+1}/{len(articles)} (ID: {article['id']}): {e}")
+            articles = cur.fetchall()
 
-    cur.close()
-    conn.close()
-    print(f"Embedding generation completed. Success: {success_count}, Errors: {error_count}")
+            if not articles:
+                print("No articles found without embeddings.")
+                return
+
+            print(f"Found {len(articles)} articles without embeddings. Generating embeddings...")
+
+            success_count = 0
+            error_count = 0
+
+            for i, article in enumerate(articles):
+                try:
+                    text_to_embed = f"{article['title']}\n\n{article['content']}"
+                    embedding = embedder.get_embedding(text_to_embed)
+
+                    cur.execute("""
+                        UPDATE scraped_articles 
+                        SET embedding = %s::vector
+                        WHERE id = %s
+                    """, (str(embedding), str(article['id'])))
+
+                    conn.commit()
+                    success_count += 1
+                    print(f"Processed article {i+1}/{len(articles)} (ID: {article['id']}) - Success")
+                    time.sleep(0.5)
+
+                except Exception as e:
+                    conn.rollback()
+                    error_count += 1
+                    print(f"Error processing article {i+1}/{len(articles)} (ID: {article['id']}): {e}")
+
+            print(f"Embedding generation completed. Success: {success_count}, Errors: {error_count}")

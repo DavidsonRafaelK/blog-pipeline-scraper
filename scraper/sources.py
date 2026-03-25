@@ -2,36 +2,67 @@ SOURCES = [
     {
         "name": "Arch Linux News",
         "url": "https://archlinux.org/feeds/news/",
-        "type": "rss",
         "category": "linux",
         "tags": ["arch-linux", "linux"]
     },
     {
         "name": "This Week in Linux",
         "url": "https://thisweekinlinux.com/feed/",
-        "type": "rss",
         "category": "linux",
         "tags": ["linux", "open-source"]
     },
     {
-        "name": "CSS Tricks",
-        "url": "https://css-tricks.com/feed/",
-        "type": "rss",
-        "category": "webdev",
-        "tags": ["css", "javascript", "web-dev"]
-    },
-    {
         "name": "Smashing Magazine",
         "url": "https://www.smashingmagazine.com/feed/",
-        "type": "rss",
         "category": "webdev",
         "tags": ["web-dev", "ux", "frontend"]
     },
     {
-        "name": "The Batch (DeepLearning.AI)",
-        "url": "https://www.deeplearning.ai/the-batch/feed/",
-        "type": "rss",
+        "name": "DEV Community",
+        "url": "https://dev.to/feed",
+        "category": "webdev",
+        "tags": ["web-dev", "fullstack", "javascript"]
+    },
+    {
+        "name": "Vercel Blog",
+        "url": "https://vercel.com/atom",
+        "category": "webdev",
+        "tags": ["nextjs", "vercel", "frontend", "ai"]
+    },
+    {
+        "name": "Node.js Blog",
+        "url": "https://nodejs.org/en/feed/blog.xml",
+        "category": "backend",
+        "tags": ["nodejs", "javascript", "backend"]
+    },
+    {
+        "name": "The Pragmatic Engineer",
+        "url": "https://blog.pragmaticengineer.com/rss/",
+        "category": "backend",
+        "tags": ["backend", "systems", "engineering"]
+    },
+    {
+        "name": "Martin Fowler",
+        "url": "https://martinfowler.com/feed.atom",
+        "category": "backend",
+        "tags": ["architecture", "backend", "software-design"]
+    },
+    {
+        "name": "InfoQ",
+        "url": "https://www.infoq.com/feed/",
+        "category": "backend",
+        "tags": ["backend", "devops", "architecture"]
+    },
+    {
+        "name": "Meta Engineering",
+        "url": "https://engineering.fb.com/feed/",
+        "category": "backend",
+        "tags": ["backend", "systems", "infrastructure"]
+    },
+    {
+        "name": "Machine Learning Mastery",
+        "url": "https://machinelearningmastery.com/feed/",
         "category": "ai-ml",
-        "tags": ["ai", "deep-learning"]
+        "tags": ["ai", "machine-learning", "deep-learning"]
     },
 ]

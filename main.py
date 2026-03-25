@@ -1,8 +1,11 @@
 import asyncio
+from dotenv import load_dotenv
 from scraper.rss import scrape_all_sources
 from scraper.sources import SOURCES
 from database.db import save_articles
 from embeddings.generator import generate_embeddings_for_all
+
+load_dotenv()
 
 async def main():
     print("Starting the scraping process...")
